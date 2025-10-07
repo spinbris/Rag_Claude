@@ -28,6 +28,7 @@ Big picture / architecture notes
 - Running the example: run the `examples/basic_usage` script or `python main.py` for the simple greeting.
 - Running the example: run the `examples/basic_usage` script or `python main.py` for the simple greeting.
 - Tests: none present. Keep changes small and run a quick smoke by invoking the example usage or a small script that instantiates `RAGSystem` and calls `chunker.chunk` and `VectorStore.add_documents`.
+   - Loading data: `RAGSystem.load_file(path, verbose=False)` accepts a file or directory. If `path` is a directory it will recurse and load supported files. Use `verbose=True` to get a summary dict: `{'added_chunks', 'skipped_files', 'errors'}`.
 
 Project-specific conventions and patterns
 - Loader interface: every loader implements `load(source: str) -> List[Dict]` returning at least `content`, `source`, `type`. Respect and preserve these keys when adding fields.

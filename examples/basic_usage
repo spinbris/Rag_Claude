@@ -1,47 +1,56 @@
 
-"""Example usage of the RAG system."""
+"""Example usage of the RAG system (loads files from `data/`)."""
 
-from Rag_Claude import Rag_Claude
+import os
+from dotenv import load_dotenv
+from rag import RAGSystem
+
+# Load environment variables from .env (override existing env vars)
+load_dotenv(override=True)
 
 
 def main():
-    # Initialize the RAG system
-    rag = Rag_Claude()
-    
-    # Load various sources
-    rag.load_website("https://en.wikipedia.org/wiki/Python_(programming_language)")
-    rag.load_pdf("example.pdf")
-    rag.load_docx("document.docx")
-    rag.load_csv("data.csv")
-    rag.load_txt("notes.txt")
-    rag.load_markdown("README.md")
-    
-    # Or use auto-detection
-    rag.load_file("some_file.pdf")  # Automatically detects file type
-    
-    # Save the index
-    rag.save("rag_index.pkl")
-    
-    # Query the system
-    question = "What is Python used for?"
-    answer = rag.query(question)
-    print(f"\nQuestion: {question}")
-    print(f"Answer: {answer}")
-    
-    # Search for relevant documents
-    results = rag.search("machine learning", top_k=3)
-    print("\n--- Search Results ---")
-    for i, result in enumerate(results):
-        print(f"\n{i+1}. Score: {result['score']:.3f}")
-        print(f"Source: {result['source']}")
-        print(f"Type: {result['type']}")
-        print(f"Content preview: {result['content'][:200]}...")
-    
-    # Get system stats
-    stats = rag.get_stats()
-    print("\n--- System Stats ---")
-    for key, value in stats.items():
-        print(f"{key}: {value}")
+    rag = RAGSystem()
+
+    data_path = os.path.join(os.path.dirname(__file__), "..", "data")
+
+    print(f"Loading data from: {data_path}")
+    try:
+        summary = rag.load_file(data_path, verbose=True)
+    except ValueError as e:
+        print(f"Could not load data: {e}")
+        print("If this is because OPENAI_API_KEY is not set, export your key and retry.")
+        return
+
+    if isinstance(summary, dict):
+        print(f"Added chunks: {summary['added_chunks']}")
+        if summary["skipped_files"]:
+            print("Skipped files:")
+            for s in summary["skipped_files"]:
+                print(" -", s)
+        if summary["errors"]:
+            print("Errors:")
+            for err in summary["errors"]:
+                print(err)
+    else:
+        print(f"Added chunks: {summary}")
+
+    # Save index if we added anything
+    added_chunks = summary["added_chunks"] if isinstance(summary, dict) else summary
+    if added_chunks > 0:
+        rag.save("rag_index.pkl")
+
+    # Only run a query if an OpenAI key is available
+    if os.getenv("OPENAI_API_KEY"):
+        question = "What is Python used for?"
+        try:
+            answer = rag.query(question)
+            print(f"\nQuestion: {question}")
+            print(f"Answer: {answer}")
+        except Exception as e:
+            print(f"Query failed: {e}")
+    else:
+        print("OPENAI_API_KEY not set — skipping query example.")
 
 
 if __name__ == "__main__":

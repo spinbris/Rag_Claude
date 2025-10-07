@@ -1,6 +1,16 @@
 
 """Main RAG system implementation."""
 
+# Ensure environment variables from .env are available to all consumers that
+# import this module. This is defensive: if python-dotenv is not installed we
+# silently continue and rely on the existing environment.
+try:
+    from dotenv import load_dotenv
+
+    load_dotenv(override=True)
+except ImportError:
+    pass
+
 import openai
 import os
 from typing import List, Dict
@@ -133,7 +143,7 @@ class RAGSystem:
         docs = self.md_loader.load(filepath)
         return self._process_documents(docs)
     
-    def load_file(self, filepath: str) -> int:
+    def load_file(self, filepath: str, verbose: bool = False):
         """
         Auto-detect file type and load content.
         
@@ -143,8 +153,37 @@ class RAGSystem:
         Returns:
             Number of chunks added
         """
+        # If a directory is provided, walk it and load supported files.
+        if os.path.isdir(filepath):
+            total = 0
+            skipped = []
+            errors = []
+
+            for root, _, files in os.walk(filepath):
+                for fname in files:
+                    full = os.path.join(root, fname)
+                    try:
+                        added = self.load_file(full)
+                        # load_file returns int when called non-verbosely
+                        if isinstance(added, dict):
+                            added = added.get("added_chunks", 0)
+                        total += added
+                    except ValueError:
+                        skipped.append(full)
+                    except Exception as e:
+                        errors.append({"file": full, "error": str(e)})
+
+            if verbose:
+                return {
+                    "added_chunks": total,
+                    "skipped_files": skipped,
+                    "errors": errors,
+                }
+
+            return total
+
         ext = os.path.splitext(filepath)[1].lower()
-        
+
         loaders = {
             '.pdf': self.load_pdf,
             '.docx': self.load_docx,
@@ -154,10 +193,16 @@ class RAGSystem:
             '.md': self.load_markdown,
             '.markdown': self.load_markdown
         }
-        
+
         loader = loaders.get(ext)
         if loader:
-            return loader(filepath)
+            added = loader(filepath)
+            # loader returns list[dict] of docs -> process via _process_documents
+            if isinstance(added, list):
+                # Some loader returns documents; process them consistently
+                return self._process_documents(added)
+
+            return added
         else:
             raise ValueError(f"Unsupported file type: {ext}")
     
