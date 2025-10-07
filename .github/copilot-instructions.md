@@ -18,10 +18,14 @@ Big picture / architecture notes
 - Data passed between components: documents are dicts with keys `content`, `source`, `type`. Embeddings are lists of floats aligned one-to-one with chunks.
 - The vector store is simple, in-memory, and persisted via `pickle` files using `VectorStore.save`/`load`.
 
-Developer workflows & commands
+-Developer workflows & commands
 - Python version: `>=3.12` as declared in `pyproject.toml`.
-- Install dependencies (virtualenv/poetry/pip) then run examples by executing the example script or `main.py`.
-  - Minimal install (using pip): create venv, activate, then `pip install -r requirements.txt` if you add one. Currently `pyproject.toml` lists `polars` as a dependency; other libs used in the code include `openai`, `pypdf`, `scikit-learn`, `numpy`.
+ - Dependency management: prefer using `uv` + `pyproject.toml` + `uv.lock` as the source-of-truth.
+   - Add new dependencies with `uv add <package>` which will update `pyproject.toml` and `uv.lock`.
+   - For reproducible installs use `uv` to restore from `uv.lock` on CI or other machines.
+   - CI note: GitHub Actions will perform a one-time bootstrap step to install `uv` via pip, then run `uv install` to restore from `uv.lock` (this keeps dependency resolution reproducible while only using pip once to install `uv`).
+   - If contributors need a quick local install without `uv`, they can create a virtualenv and `pip install` the packages listed under `pyproject.toml`'s `dependencies`.
+- Running the example: run the `examples/basic_usage` script or `python main.py` for the simple greeting.
 - Running the example: run the `examples/basic_usage` script or `python main.py` for the simple greeting.
 - Tests: none present. Keep changes small and run a quick smoke by invoking the example usage or a small script that instantiates `RAGSystem` and calls `chunker.chunk` and `VectorStore.add_documents`.
 

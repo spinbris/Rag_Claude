@@ -1,12 +1,12 @@
 
 """Example usage of the RAG system."""
 
-from rag_system import RAGSystem
+from Rag_Claude import Rag_Claude
 
 
 def main():
     # Initialize the RAG system
-    rag = RAGSystem()
+    rag = Rag_Claude()
     
     # Load various sources
     rag.load_website("https://en.wikipedia.org/wiki/Python_(programming_language)")

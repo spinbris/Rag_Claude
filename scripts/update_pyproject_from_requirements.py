@@ -85,9 +85,13 @@ def main(argv: list[str] | None = None) -> int:
 
     args = parser.parse_args(argv)
 
+    if not REQ_FILE.exists():
+        print("requirements.txt not found; nothing to sync. Use `uv add <pkg>` to manage dependencies.")
+        return 0
+
     reqs = parse_requirements(REQ_FILE)
     if not reqs:
-        print("No requirements found in requirements.txt")
+        print("No usable requirements found in requirements.txt (comments or unsupported lines only). Nothing to sync.")
         return 0
 
     if not PYPROJECT.exists():
