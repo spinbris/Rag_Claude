@@ -39,17 +39,21 @@ class RAGSystem:
         """
         # Import loaders lazily; some loaders depend on optional packages
         # (requests, bs4, pypdf) which may not be available in test envs.
-        try:
-            from .loaders import (
-                WebLoader,
-                PDFLoader,
-                DocxLoader,
-                CSVLoader,
-                TxtLoader,
-                MarkdownLoader,
-            )
-        except Exception:
-            WebLoader = PDFLoader = DocxLoader = CSVLoader = TxtLoader = MarkdownLoader = None
+        from loaders import BaseLoader
+
+        def _try_import_loader(loader_name):
+            try:
+                from loaders import __getattr__ as loader_getattr
+                return loader_getattr(loader_name)
+            except (ImportError, ModuleNotFoundError):
+                return None
+
+        WebLoader = _try_import_loader("WebLoader")
+        PDFLoader = _try_import_loader("PDFLoader")
+        DocxLoader = _try_import_loader("DocxLoader")
+        CSVLoader = _try_import_loader("CSVLoader")
+        TxtLoader = _try_import_loader("TxtLoader")
+        MarkdownLoader = _try_import_loader("MarkdownLoader")
 
         self.web_loader = WebLoader() if WebLoader is not None else None
         self.pdf_loader = PDFLoader() if PDFLoader is not None else None

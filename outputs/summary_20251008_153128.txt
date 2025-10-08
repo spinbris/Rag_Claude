@@ -1,0 +1,18 @@
+================================================================================
+DOCUMENT SUMMARY
+================================================================================
+
+Generated: 2025-10-08 15:31:28
+Source: data/CPG229.pdf
+Chunks processed: 46
+
+--- SUMMARY ---
+The document is a Prudential Practice Guide (CPG 229) issued by the Australian Prudential Regulation Authority (APRA) that outlines sound practices for managing financial risks associated with climate change. It discusses various aspects of governance, risk management, and disclosure related to climate risks, aiming to assist APRA-regulated institutions in complying with relevant prudential standards.
+
+--- STATS ---
+total_documents: 46
+chunk_size: 1000
+chunk_overlap: 200
+embedding_model: text-embedding-3-small
+llm_model: gpt-4o-mini
+================================================================================
