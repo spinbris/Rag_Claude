@@ -86,7 +86,62 @@ uv run python examples/add_to_existing_collection.py
 
 ---
 
-### 4. 🗄️ Collection Management
+### 4. 🌐 Web Scraping - Sitemap Method ⭐
+**File:** `web_scraping_sitemap.py`
+
+Scrape an entire website using its sitemap.xml (RECOMMENDED method).
+
+```bash
+uv run python examples/web_scraping_sitemap.py
+```
+
+**What it does:**
+- Fetches sitemap.xml from a website
+- Extracts all URL locations
+- Loads each page into ChromaDB
+- Handles sitemap indexes (sitemap of sitemaps)
+- Generates scraping report
+
+**Why use this:**
+- ✅ Fast - Direct URLs, no crawling
+- ✅ Complete - Gets all indexed pages
+- ✅ Respectful - Uses site's official index
+- ✅ Efficient - No duplicate pages
+
+**Example sitemaps:**
+- `https://docs.python.org/3/sitemap.xml`
+- `https://example.com/sitemap_index.xml`
+
+---
+
+### 5. 🕷️ Web Scraping - Recursive Method
+**File:** `web_scraping_recursive.py`
+
+Recursively crawl a website by following links.
+
+```bash
+uv run python examples/web_scraping_recursive.py
+```
+
+**What it does:**
+- Starts from a base URL
+- Extracts and follows all links
+- Crawls up to specified depth
+- Respects rate limits (delays between requests)
+- Generates crawl report
+
+**Use cases:**
+- No sitemap available
+- Small sites only
+- Testing/development
+
+**⚠️  Warning:** Can be slow and may hit rate limits. Use sitemap method when possible.
+
+**See [Web Scraping Guide](../guides/WEB_SCRAPING_GUIDE.md) for detailed comparison and best practices.**
+
+---
+
+### 6. 🗄️ Collection Management
 **File:** `manage_collections.py`
 
 Manage multiple ChromaDB collections.

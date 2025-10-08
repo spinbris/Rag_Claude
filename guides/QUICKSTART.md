@@ -5,7 +5,11 @@
 ### Step 1: Install Dependencies
 
 ```bash
+# Install all dependencies
 uv sync
+
+# Install ragsystem package in editable mode
+uv pip install -e .
 ```
 
 ### Step 2: Set up OpenAI API Key
@@ -82,7 +86,7 @@ print(answer)
 | Start Gradio UI | `./start_gradio.sh` |
 | Stop Gradio UI | `./stop_gradio.sh` or `Ctrl+C` |
 | Load multiple files | `uv run python examples/load_multiple_files.py` |
-| Test setup | `uv run python test_gradio.py` |
+| Test setup | `uv run python tests/test_gradio.py` |
 | Run tests | `uv run pytest` |
 
 ---
@@ -90,7 +94,7 @@ print(answer)
 ## 📊 Check Your Setup
 
 ```bash
-uv run python test_gradio.py
+uv run python tests/test_gradio.py
 ```
 
 This will verify:

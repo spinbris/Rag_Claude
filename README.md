@@ -13,6 +13,14 @@ This repository provides a Retrieval-Augmented Generation (RAG) system with **Ch
 
 ## Quick Start
 
+### 0. Installation
+
+```bash
+# Install dependencies and setup package
+uv sync
+uv pip install -e .
+```
+
 ### 1. Load and Query Documents
 
 ```python
@@ -58,6 +66,8 @@ Launch the interactive web interface to query your documents:
 
 The app will automatically find an available port (7860-7869) and display the URL.
 
+**Files Location:** All Gradio files are in the [`gradio/`](gradio/) folder.
+
 **Management:**
 - **Start (auto-open browser):** `./start_gradio.sh`
 - **Start (manual URL):** `./start_gradio.sh no-browser`
@@ -71,6 +81,8 @@ The app will automatically find an available port (7860-7869) and display the UR
 2. Run: `./start_gradio.sh no-browser`
 3. Copy the displayed URL
 4. Paste it manually into your browser
+
+**See [gradio/README.md](gradio/README.md) for Gradio folder details.**
 
 ### Features
 
@@ -103,12 +115,14 @@ The app will automatically find an available port (7860-7869) and display the UR
 ### Quick Links
 - **[Quick Start Guide](guides/QUICKSTART.md)** - Get up and running in 3 steps
 - **[Gradio Interface Guide](guides/GRADIO_GUIDE.md)** - Complete web UI documentation
+- **[Web Scraping Guide](guides/WEB_SCRAPING_GUIDE.md)** - Scrape entire websites (sitemap & recursive)
 - **[Examples](examples/README.md)** - Code examples and tutorials
 
 ### Guides Folder
 All comprehensive guides are in the [`guides/`](guides/) folder:
 - [QUICKSTART.md](guides/QUICKSTART.md) - Quick start guide
 - [GRADIO_GUIDE.md](guides/GRADIO_GUIDE.md) - Web interface guide
+- [WEB_SCRAPING_GUIDE.md](guides/WEB_SCRAPING_GUIDE.md) - Web scraping (sitemap & recursive)
 - [EXIT_BUTTON_INFO.md](guides/EXIT_BUTTON_INFO.md) - Exit button documentation
 - [SHUTDOWN_CLEANUP.md](guides/SHUTDOWN_CLEANUP.md) - Shutdown technical details
 - [TEST_EXIT_BUTTON.md](guides/TEST_EXIT_BUTTON.md) - Exit button testing

@@ -62,6 +62,19 @@ This folder contains comprehensive guides for using the RAG System with ChromaDB
 
 ---
 
+### 🕷️ [WEB_SCRAPING_GUIDE.md](WEB_SCRAPING_GUIDE.md)
+**Complete web scraping guide**
+- Sitemap-based scraping (recommended)
+- Recursive crawling (fallback)
+- Method comparison
+- Finding sitemaps
+- Best practices
+- Troubleshooting
+
+👉 **Scrape entire websites into ChromaDB**
+
+---
+
 ### 📁 [ORGANIZATION.md](ORGANIZATION.md)
 **Documentation organization explained**
 - Folder structure
@@ -78,16 +91,21 @@ This folder contains comprehensive guides for using the RAG System with ChromaDB
 ### Main Documentation
 - **[../README.md](../README.md)** - Project overview and features
 - **[../examples/README.md](../examples/README.md)** - Code examples
+- **[../gradio/README.md](../gradio/README.md)** - Gradio folder details
+- **[../tests/README.md](../tests/README.md)** - Test suite documentation
 
 ### Quick Reference
 | Need to... | See... |
 |------------|--------|
 | Get started quickly | [QUICKSTART.md](QUICKSTART.md) |
 | Learn the web interface | [GRADIO_GUIDE.md](GRADIO_GUIDE.md) |
+| Scrape websites | [WEB_SCRAPING_GUIDE.md](WEB_SCRAPING_GUIDE.md) |
 | Understand exit button | [EXIT_BUTTON_INFO.md](EXIT_BUTTON_INFO.md) |
 | Fix shutdown warnings | [SHUTDOWN_CLEANUP.md](SHUTDOWN_CLEANUP.md) |
 | Test exit functionality | [TEST_EXIT_BUTTON.md](TEST_EXIT_BUTTON.md) |
 | See code examples | [../examples/README.md](../examples/README.md) |
+| Run tests | [../tests/README.md](../tests/README.md) |
+| Gradio file details | [../gradio/README.md](../gradio/README.md) |
 
 ---
 
@@ -100,11 +118,16 @@ Rag_Claude/
 │   ├── README.md               # This file
 │   ├── QUICKSTART.md           # Quick start guide
 │   ├── GRADIO_GUIDE.md         # Web interface guide
+│   ├── WEB_SCRAPING_GUIDE.md   # Web scraping guide
 │   ├── EXIT_BUTTON_INFO.md     # Exit button documentation
 │   ├── SHUTDOWN_CLEANUP.md     # Shutdown technical details
 │   └── TEST_EXIT_BUTTON.md     # Exit button testing
-├── examples/
-│   └── README.md               # Code examples documentation
+├── gradio/                      # Gradio web interface files
+│   └── README.md               # Gradio folder documentation
+├── tests/                       # Test suite
+│   └── README.md               # Tests documentation
+├── examples/                    # Code examples
+│   └── README.md               # Examples documentation
 └── ...
 ```
 

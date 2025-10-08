@@ -11,7 +11,7 @@
 Or manually:
 
 ```bash
-uv run python gradio_app.py
+uv run python gradio/gradio_app.py
 ```
 
 ### 2. Open in Browser
@@ -387,7 +387,9 @@ In the terminal where the server is running:
 
 From another terminal:
 ```bash
-./stop_gradio.sh
+./stop_gradio.sh  # From project root
+# Or from gradio folder:
+cd gradio && ./stop_gradio.sh
 ```
 
 ---
