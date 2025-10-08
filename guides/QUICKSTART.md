@@ -144,9 +144,9 @@ uv sync
 
 ## 📖 Learn More
 
-- **[README.md](README.md)** - System overview and features
+- **[README.md](../README.md)** - System overview and features
 - **[GRADIO_GUIDE.md](GRADIO_GUIDE.md)** - Complete Gradio interface guide
-- **[examples/README.md](examples/README.md)** - Code examples and tutorials
+- **[examples/README.md](../examples/README.md)** - Code examples and tutorials
 
 ---
 

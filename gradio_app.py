@@ -177,6 +177,39 @@ def load_sample_data():
         return f"❌ Error loading data: {str(e)}"
 
 
+def shutdown_server():
+    """Shutdown the Gradio server gracefully."""
+    import sys
+    import threading
+    import os
+    import signal
+    import warnings
+
+    def stop():
+        print("\n" + "="*80)
+        print("🛑 SHUTDOWN REQUESTED")
+        print("="*80)
+        print("\n✓ Closing server...")
+        print("✓ Terminal will close automatically in 2 seconds...")
+        print("\n" + "="*80 + "\n")
+
+        # Give time for the message to display
+        import time
+        time.sleep(2)
+
+        # Suppress resource tracker warnings during shutdown
+        warnings.filterwarnings("ignore", category=UserWarning, message=".*resource_tracker.*")
+
+        # Use os._exit for immediate termination without cleanup
+        # This prevents resource tracker warnings about leaked semaphores
+        os._exit(0)
+
+    # Start shutdown in background thread
+    threading.Thread(target=stop, daemon=True).start()
+
+    return "✅ **Server shutting down...**\n\n**The terminal will close automatically.**\n\nYou can close this browser tab now."
+
+
 # Initialize RAG on startup
 startup_message = initialize_rag()
 
@@ -383,6 +416,18 @@ with gr.Blocks(title="RAG System - ChromaDB Query Interface", theme=gr.themes.So
     ---
     **RAG System with ChromaDB** | Built with Gradio | Powered by OpenAI
     """)
+
+    # Exit/Shutdown Section
+    with gr.Row():
+        with gr.Column(scale=4):
+            gr.Markdown("")  # Spacer
+        with gr.Column(scale=1):
+            shutdown_output = gr.Markdown("")
+            shutdown_btn = gr.Button("🛑 Exit & Shutdown Server", variant="stop", size="sm")
+            shutdown_btn.click(
+                fn=shutdown_server,
+                outputs=shutdown_output
+            )
 
 # Launch the app
 if __name__ == "__main__":

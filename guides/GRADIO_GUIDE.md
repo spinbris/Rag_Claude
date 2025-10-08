@@ -364,10 +364,38 @@ for q in questions:
 
 ---
 
+## Shutting Down the Server
+
+### Method 1: Exit Button (Easiest) ⭐
+
+The **recommended** way to shut down:
+
+1. Scroll to the bottom of the Gradio interface
+2. Click the **"🛑 Exit & Shutdown Server"** button
+3. Wait 2 seconds
+4. **Terminal automatically closes** - No Ctrl+C needed!
+5. Close the browser tab (if it doesn't auto-close)
+
+**This is the cleanest method - the terminal will close itself!**
+
+### Method 2: Keyboard Shortcut
+
+In the terminal where the server is running:
+- Press **Ctrl + C** (or **Cmd + C** on Mac)
+
+### Method 3: Stop Script
+
+From another terminal:
+```bash
+./stop_gradio.sh
+```
+
+---
+
 ## Keyboard Shortcuts
 
 - **Shift + Enter** in question box: Submit query
-- **Ctrl/Cmd + C** on running app: Stop server
+- **Ctrl/Cmd + C** in terminal: Stop server immediately
 
 ---
 

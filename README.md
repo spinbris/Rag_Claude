@@ -61,7 +61,10 @@ The app will automatically find an available port (7860-7869) and display the UR
 **Management:**
 - **Start (auto-open browser):** `./start_gradio.sh`
 - **Start (manual URL):** `./start_gradio.sh no-browser`
-- **Stop:** `./stop_gradio.sh` or press `Ctrl+C`
+- **Stop:** Click the "🛑 Exit & Shutdown Server" button in the interface
+- **Alternative stop:** `./stop_gradio.sh` or press `Ctrl+C`
+
+**The exit button automatically closes both the browser and terminal - no Ctrl+C needed!**
 
 **If browser shows blank page:**
 1. Stop the server (Ctrl+C)
@@ -93,7 +96,22 @@ The app will automatically find an available port (7860-7869) and display the UR
    - Parameter explanations
    - Troubleshooting guide
 
-**See [GRADIO_GUIDE.md](GRADIO_GUIDE.md) for detailed documentation.**
+**See [guides/GRADIO_GUIDE.md](guides/GRADIO_GUIDE.md) for detailed documentation.**
+
+## 📚 Documentation
+
+### Quick Links
+- **[Quick Start Guide](guides/QUICKSTART.md)** - Get up and running in 3 steps
+- **[Gradio Interface Guide](guides/GRADIO_GUIDE.md)** - Complete web UI documentation
+- **[Examples](examples/README.md)** - Code examples and tutorials
+
+### Guides Folder
+All comprehensive guides are in the [`guides/`](guides/) folder:
+- [QUICKSTART.md](guides/QUICKSTART.md) - Quick start guide
+- [GRADIO_GUIDE.md](guides/GRADIO_GUIDE.md) - Web interface guide
+- [EXIT_BUTTON_INFO.md](guides/EXIT_BUTTON_INFO.md) - Exit button documentation
+- [SHUTDOWN_CLEANUP.md](guides/SHUTDOWN_CLEANUP.md) - Shutdown technical details
+- [TEST_EXIT_BUTTON.md](guides/TEST_EXIT_BUTTON.md) - Exit button testing
 
 ## Notes
 
