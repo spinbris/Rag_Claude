@@ -1,27 +1,55 @@
 RAGSystem
 ==========
 
-This repository provides a small Retrieval-Augmented Generation (RAG) system.
+This repository provides a Retrieval-Augmented Generation (RAG) system with **ChromaDB** vector storage.
 
-Quick start for loading multiple documents
+## Features
 
-1. Create a `data/` directory at the project root and drop files inside (PDF, .docx, .md, .txt, .csv).
-2. Use the library to load all files from the directory:
+- 🗄️ **ChromaDB Vector Storage**: Persistent, open-source vector database (no pickle files!)
+- 📄 **Multi-format Support**: PDF, DOCX, CSV, TXT, Markdown, and web pages
+- 🔍 **Semantic Search**: Cosine similarity-based retrieval
+- 💾 **Automatic Persistence**: Data is automatically saved and loaded
+- 🚀 **Knowledge Graph Ready**: Built on ChromaDB for future graph integration
+
+## Quick Start
+
+### 1. Load and Query Documents
 
 ```python
 from ragsystem import RAGSystem
 
-rag = RAGSystem()
-# Walks data/ and loads supported files. For a summary use verbose=True:
+# Initialize with ChromaDB persistence
+rag = RAGSystem(persist_directory="./chroma_db")
+
+# Load documents from data/ directory
 summary = rag.load_file('data/', verbose=True)
 print(f"Added {summary['added_chunks']} chunks from data/")
-if summary['skipped_files']:
-	print("Skipped files:", summary['skipped_files'])
 
-# Save index
-rag.save('rag_index.pkl')
+# Query the system
+answer = rag.query("What is this document about?")
+print(answer)
 ```
 
-Notes:
-- `RAGSystem.load_file` accepts a directory path and will recurse into subdirectories.
-- Unsupported file types are skipped.
+### 2. Persistence (Automatic!)
+
+ChromaDB automatically persists data. Simply initialize with the same directory:
+
+```python
+# Later, in a new session...
+rag = RAGSystem(persist_directory="./chroma_db")
+# Your data is already loaded!
+answer = rag.query("What are the key points?")
+```
+
+## Storage
+
+- **Vector Database**: ChromaDB (SQLite-backed)
+- **Default Location**: `./chroma_db/`
+- **Data Format**: Open-source, portable, secure
+- No manual save/load required!
+
+## Notes
+
+- `RAGSystem.load_file` accepts a directory path and will recurse into subdirectories
+- Unsupported file types are skipped
+- All outputs are saved to `outputs/` folder

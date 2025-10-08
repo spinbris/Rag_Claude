@@ -12,10 +12,10 @@ except ImportError:
 
 import openai
 import os
-from typing import List, Dict
+from typing import List, Dict, Optional
 from .chunkers import TextChunker
 from .embeddings import OpenAIEmbeddings
-from .storage import VectorStore
+from .storage import ChromaVectorStore
 
 
 class RAGSystem:
@@ -26,7 +26,9 @@ class RAGSystem:
                  chunk_size: int = 1000,
                  chunk_overlap: int = 200,
                  embedding_model: str = "text-embedding-3-small",
-                 llm_model: str = "gpt-4o-mini"):
+                 llm_model: str = "gpt-4o-mini",
+                 persist_directory: str = "./chroma_db",
+                 collection_name: str = "rag_documents"):
         """
         Initialize RAG system.
 
@@ -36,6 +38,8 @@ class RAGSystem:
             chunk_overlap: Overlap between chunks
             embedding_model: OpenAI embedding model
             llm_model: OpenAI LLM model for generation
+            persist_directory: Directory for ChromaDB persistence
+            collection_name: Name of ChromaDB collection
         """
         # Import loaders lazily; some loaders depend on optional packages
         # (requests, bs4, pypdf) which may not be available in test envs.
@@ -64,7 +68,7 @@ class RAGSystem:
 
         self.chunker = TextChunker(chunk_size, chunk_overlap)
         self.embeddings = OpenAIEmbeddings(api_key, embedding_model)
-        self.vector_store = VectorStore()
+        self.vector_store = ChromaVectorStore(persist_directory, collection_name)
         self.llm_model = llm_model
         self.client = openai.OpenAI(api_key=self.embeddings.api_key)
 

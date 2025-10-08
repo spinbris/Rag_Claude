@@ -9,3 +9,11 @@ wheels/
 # Virtual environments
 .venv
 .env
+
+# ChromaDB storage
+chroma_db/
+outputs/chroma_db/
+
+# Output files
+outputs/*.txt
+*.pkl
