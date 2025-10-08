@@ -14,7 +14,8 @@ except ImportError:
 	# If python-dotenv is not installed, continue without raising.
 	pass
 
-from .rag import RAGSystem
-
+# Do not import subpackages at module import time; importing the top-level
+# package during test collection caused heavy imports (requests, pypdf, etc.)
+# Tests should import specific modules (e.g. `from ragsystem import RAGSystem`) when needed.
 __version__ = "1.0.0"
-__all__ = ["RAGSystem"]
+__all__ = []

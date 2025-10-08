@@ -1,5 +1,5 @@
-Rag_Claude
-===========
+RAGSystem
+==========
 
 This repository provides a small Retrieval-Augmented Generation (RAG) system.
 
@@ -9,7 +9,7 @@ Quick start for loading multiple documents
 2. Use the library to load all files from the directory:
 
 ```python
-from rag import RAGSystem
+from ragsystem import RAGSystem
 
 rag = RAGSystem()
 # Walks data/ and loads supported files. For a summary use verbose=True:

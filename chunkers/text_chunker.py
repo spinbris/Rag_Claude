@@ -54,10 +54,8 @@ class TextChunker:
                     chunk = chunk[:break_point + 1]
                     end = start + break_point + 1
             
-            chunk = chunk.strip()
-            if len(chunk) > 50:  # Minimum chunk size
-                chunks.append(chunk)
-            
-            start = end - self.chunk_overlap
-        
-        return chunks
+            """Compatibility shim: re-export TextChunker from `ragsystem` package."""
+
+            from ragsystem.chunkers.text_chunker import TextChunker
+
+            __all__ = ["TextChunker"]

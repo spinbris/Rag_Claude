@@ -17,7 +17,7 @@ def test_load_data_directory(tmp_path, monkeypatch):
     m1.write_text("# Title\n\nSome content here.\n")
 
     # Run RAGSystem load
-    from rag import RAGSystem
+    from ragsystem import RAGSystem
 
     rag = RAGSystem()
     summary = rag.load_file(str(data_dir), verbose=True)

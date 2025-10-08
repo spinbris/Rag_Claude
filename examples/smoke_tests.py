@@ -85,7 +85,7 @@ def rag_instantiate_smoke() -> bool:
 	"""
 	try:
 		# Import lazily to avoid side-effects during module import
-		from rag import RAGSystem
+		from ragsystem import RAGSystem
 
 		# construct with default args (do not require an API key for instantiation)
 		rs = RAGSystem()

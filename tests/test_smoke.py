@@ -43,7 +43,7 @@ def test_vector_store_add_and_search(vector_store: VectorStore):
 
 def test_rag_instantiation_and_mock_embeddings(monkeypatch):
     # Import here to avoid side-effects at module import time
-    from rag import RAGSystem
+    from ragsystem import RAGSystem
     from embeddings.openai_embeddings import OpenAIEmbeddings
 
     # Provide a fake client that returns predictable embeddings
@@ -72,7 +72,8 @@ def test_rag_instantiation_and_mock_embeddings(monkeypatch):
     # Now instantiate RAGSystem and perform a small pipeline run that calls embeddings
     rs = RAGSystem(api_key="fake")
     # Add a small document and ensure save/load or search doesn't blow up
-    docs = [{"content": "hello world", "source": "test", "type": "text"}]
+    # Make the document long enough to produce at least one chunk
+    docs = [{"content": "hello world " * 10, "source": "test", "type": "text"}]
     chunks = rs.chunker.chunk(docs[0]["content"])
     assert isinstance(chunks, list)
 

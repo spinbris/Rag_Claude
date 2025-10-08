@@ -3,7 +3,7 @@
 
 import os
 from dotenv import load_dotenv
-from rag import RAGSystem
+from ragsystem import RAGSystem
 
 # Load environment variables from .env (override existing env vars)
 load_dotenv(override=True)

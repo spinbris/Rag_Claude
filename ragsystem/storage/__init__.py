@@ -1,6 +1,3 @@
-
-"""Vector storage and retrieval."""
-
 from .vector_storage import VectorStore
 
 __all__ = ["VectorStore"]
