@@ -48,6 +48,53 @@ answer = rag.query("What are the key points?")
 - **Data Format**: Open-source, portable, secure
 - No manual save/load required!
 
+## 🌐 Web Interface (Gradio)
+
+Launch the interactive web interface to query your documents:
+
+```bash
+./start_gradio.sh
+```
+
+The app will automatically find an available port (7860-7869) and display the URL.
+
+**Management:**
+- **Start (auto-open browser):** `./start_gradio.sh`
+- **Start (manual URL):** `./start_gradio.sh no-browser`
+- **Stop:** `./stop_gradio.sh` or press `Ctrl+C`
+
+**If browser shows blank page:**
+1. Stop the server (Ctrl+C)
+2. Run: `./start_gradio.sh no-browser`
+3. Copy the displayed URL
+4. Paste it manually into your browser
+
+### Features
+
+**4 Interactive Tabs:**
+
+1. **💬 Query Documents** - Ask questions in natural language
+   - Adjustable retrieval parameters (top_k, max_tokens)
+   - Source citations with similarity scores
+   - Save results to files
+
+2. **🔍 Semantic Search** - Find relevant chunks without LLM
+   - Fast keyword/concept search
+   - View exact document excerpts
+   - Similarity scoring
+
+3. **📁 Data Management** - Load and manage documents
+   - Upload from `data/` directory
+   - View loading statistics
+   - Track skipped files and errors
+
+4. **❓ Help** - Complete documentation
+   - Usage instructions
+   - Parameter explanations
+   - Troubleshooting guide
+
+**See [GRADIO_GUIDE.md](GRADIO_GUIDE.md) for detailed documentation.**
+
 ## Notes
 
 - `RAGSystem.load_file` accepts a directory path and will recurse into subdirectories
