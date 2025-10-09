@@ -16,6 +16,9 @@ import os
 import gradio as gr
 from ragsystem import RAGSystem
 from datetime import datetime
+import requests
+import xml.etree.ElementTree as ET
+from typing import List
 
 # Initialize RAG system
 persist_directory = "outputs/chroma_db"
@@ -185,6 +188,129 @@ def load_sample_data():
 
     except Exception as e:
         return f"❌ Error loading data: {str(e)}"
+
+
+def load_single_url(url: str) -> str:
+    """Load a single web page."""
+    if rag is None:
+        return "❌ RAG system not initialized."
+
+    if not url or not url.strip():
+        return "❌ Please enter a URL."
+
+    url = url.strip()
+    if not url.startswith(('http://', 'https://')):
+        url = 'https://' + url
+
+    try:
+        from loaders import WebLoader
+        loader = WebLoader(timeout=15)
+
+        print(f"Loading: {url}")
+        docs = loader.load(url)
+
+        # Process and add to RAG
+        chunks_added = rag._process_documents(docs)
+
+        return f"""
+✅ **Page Loaded Successfully!**
+
+**URL:** {url}
+
+**Chunks Added:** {chunks_added}
+
+**Database:** `outputs/chroma_db/`
+"""
+    except Exception as e:
+        return f"❌ Error loading URL: {str(e)}"
+
+
+def get_sitemap_urls(sitemap_url: str, max_urls: int = 50) -> List[str]:
+    """Extract URLs from sitemap.xml"""
+    try:
+        response = requests.get(sitemap_url, timeout=10)
+        response.raise_for_status()
+
+        root = ET.fromstring(response.content)
+        namespace = {'ns': 'http://www.sitemaps.org/schemas/sitemap/0.9'}
+
+        urls = []
+        for loc in root.findall('.//ns:loc', namespace):
+            if loc.text:
+                urls.append(loc.text)
+                if len(urls) >= max_urls:
+                    break
+
+        # Try without namespace if none found
+        if not urls:
+            for loc in root.findall('.//loc'):
+                if loc.text:
+                    urls.append(loc.text)
+                    if len(urls) >= max_urls:
+                        break
+
+        return urls[:max_urls]
+    except Exception as e:
+        raise ValueError(f"Error parsing sitemap: {str(e)}")
+
+
+def load_from_sitemap(sitemap_url: str, max_pages: int = 20) -> str:
+    """Load multiple pages from a sitemap."""
+    if rag is None:
+        return "❌ RAG system not initialized."
+
+    if not sitemap_url or not sitemap_url.strip():
+        return "❌ Please enter a sitemap URL."
+
+    sitemap_url = sitemap_url.strip()
+    if not sitemap_url.startswith(('http://', 'https://')):
+        sitemap_url = 'https://' + sitemap_url
+
+    try:
+        # Get URLs from sitemap
+        urls = get_sitemap_urls(sitemap_url, max_urls=max_pages)
+
+        if not urls:
+            return f"❌ No URLs found in sitemap: {sitemap_url}"
+
+        from loaders import WebLoader
+        loader = WebLoader(timeout=15)
+
+        total_chunks = 0
+        successful = 0
+        failed = []
+
+        for i, url in enumerate(urls, 1):
+            try:
+                print(f"Loading {i}/{len(urls)}: {url}")
+                docs = loader.load(url)
+                chunks = rag._process_documents(docs)
+                total_chunks += chunks
+                successful += 1
+            except Exception as e:
+                failed.append(f"{url}: {str(e)[:50]}")
+                print(f"  ✗ Failed: {e}")
+
+        result = f"""
+✅ **Sitemap Loading Complete!**
+
+**Sitemap URL:** {sitemap_url}
+
+**Pages Found:** {len(urls)}
+
+**Successfully Loaded:** {successful}
+
+**Failed:** {len(failed)}
+{chr(10).join(f'  • {f}' for f in failed[:3])}
+
+**Total Chunks Added:** {total_chunks}
+
+**Database:** `outputs/chroma_db/`
+"""
+        return result
+
+    except Exception as e:
+        return f"❌ Error loading sitemap: {str(e)}"
 
 
 def shutdown_server():
@@ -361,7 +487,109 @@ with gr.Blocks(title="RAG System - ChromaDB Query Interface", theme=gr.themes.So
                     4. Start querying!
                     """)
 
-        # Tab 4: Help
+        # Tab 4: Web Scraping
+        with gr.Tab("🌐 Web Scraping"):
+            gr.Markdown("### Load content from websites")
+
+            with gr.Tabs():
+                # Single URL tab
+                with gr.Tab("Single URL"):
+                    gr.Markdown("""
+                    **Load a single web page**
+
+                    Enter any web page URL to extract and load its content.
+                    """)
+
+                    with gr.Row():
+                        with gr.Column():
+                            url_input = gr.Textbox(
+                                label="Web Page URL",
+                                placeholder="https://example.com/page",
+                                lines=1
+                            )
+                            url_btn = gr.Button("🔗 Load Page", variant="primary")
+                            url_output = gr.Markdown()
+
+                            url_btn.click(
+                                fn=load_single_url,
+                                inputs=url_input,
+                                outputs=url_output
+                            )
+
+                        with gr.Column():
+                            gr.Markdown("""
+                            **Tips:**
+                            - Enter full URL (e.g., https://example.com)
+                            - Works with most public web pages
+                            - Extracts main text content
+                            - Removes scripts, styles, navigation
+
+                            **Examples:**
+                            - Blog posts
+                            - Documentation pages
+                            - News articles
+                            - Product pages
+                            """)
+
+                # Sitemap tab
+                with gr.Tab("Sitemap (Multiple Pages)"):
+                    gr.Markdown("""
+                    **Load multiple pages from a sitemap**
+
+                    Enter a sitemap.xml URL to load multiple pages at once.
+                    This is the recommended way to scrape entire websites.
+                    """)
+
+                    with gr.Row():
+                        with gr.Column():
+                            sitemap_url_input = gr.Textbox(
+                                label="Sitemap URL",
+                                placeholder="https://example.com/sitemap.xml",
+                                lines=1
+                            )
+                            sitemap_max_pages = gr.Slider(
+                                minimum=1,
+                                maximum=100,
+                                value=20,
+                                step=1,
+                                label="Maximum pages to load"
+                            )
+                            sitemap_btn = gr.Button("📑 Load from Sitemap", variant="primary")
+                            sitemap_output = gr.Markdown()
+
+                            sitemap_btn.click(
+                                fn=load_from_sitemap,
+                                inputs=[sitemap_url_input, sitemap_max_pages],
+                                outputs=sitemap_output
+                            )
+
+                        with gr.Column():
+                            gr.Markdown("""
+                            **How to find sitemaps:**
+                            - Try: `https://example.com/sitemap.xml`
+                            - Try: `https://example.com/sitemap_index.xml`
+                            - Check: `https://example.com/robots.txt`
+                            - Search: "site:example.com sitemap"
+
+                            **Best Practices:**
+                            - Start with 10-20 pages to test
+                            - Increase limit for larger sites
+                            - Loading may take several minutes
+                            - Failed pages are skipped automatically
+
+                            **See:** [Web Scraping Guide](../guides/WEB_SCRAPING_GUIDE.md) for more details
+                            """)
+
+            gr.Markdown("""
+            ---
+            **⚠️ Web Scraping Notes:**
+            - Respect website terms of service
+            - Some sites may block automated access
+            - Rate limiting is built-in (1-2 sec delay)
+            - Large sites may take time to process
+            """)
+
+        # Tab 5: Help
         with gr.Tab("❓ Help"):
             gr.Markdown("""
             ## How to Use This Interface
@@ -387,6 +615,13 @@ with gr.Blocks(title="RAG System - ChromaDB Query Interface", theme=gr.themes.So
             - **Load Documents:** Import files from the `data/` directory
             - **Supported Formats:** PDF, DOCX, CSV, TXT, Markdown
             - **Note:** Documents are automatically stored in ChromaDB
+
+            ### 4️⃣ Web Scraping Tab
+
+            - **Single URL:** Load content from individual web pages
+            - **Sitemap:** Load multiple pages from a website's sitemap
+            - **Best For:** Documentation sites, blogs, knowledge bases
+            - **Note:** Respects rate limits and removes navigation/scripts
 
             ### 📊 Understanding the Stats
 

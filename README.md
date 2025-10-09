@@ -88,7 +88,7 @@ The app will automatically find an available port (7860-7869) and display the UR
 
 ### Features
 
-**4 Interactive Tabs:**
+**5 Interactive Tabs:**
 
 1. **💬 Query Documents** - Ask questions in natural language
    - Adjustable retrieval parameters (top_k, max_tokens)
@@ -105,7 +105,13 @@ The app will automatically find an available port (7860-7869) and display the UR
    - View loading statistics
    - Track skipped files and errors
 
-4. **❓ Help** - Complete documentation
+4. **🌐 Web Scraping** - Load content from websites
+   - Single URL loading for individual pages
+   - Sitemap-based loading for entire sites
+   - Automatic content extraction
+   - Built-in rate limiting
+
+5. **❓ Help** - Complete documentation
    - Usage instructions
    - Parameter explanations
    - Troubleshooting guide

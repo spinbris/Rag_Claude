@@ -22,7 +22,7 @@ Navigate to: **http://localhost:7860**
 
 ## Interface Overview
 
-The Gradio interface has 4 main tabs:
+The Gradio interface has 5 main tabs:
 
 ### 💬 Query Documents Tab
 
@@ -98,6 +98,75 @@ The Gradio interface has 4 main tabs:
 - CSV (`.csv`)
 - Text files (`.txt`)
 - Markdown (`.md`, `.markdown`)
+
+---
+
+### 🌐 Web Scraping Tab
+
+**Load content from websites into ChromaDB.**
+
+The Web Scraping tab has two sub-tabs:
+
+#### Single URL
+
+**Load content from individual web pages.**
+
+**How to Use:**
+1. Enter a web page URL (e.g., `https://example.com/article`)
+2. Click "🔗 Load Page"
+3. Content is extracted and added to ChromaDB
+
+**Best For:**
+- Blog posts
+- Documentation pages
+- News articles
+- Product pages
+- Any public web page
+
+**What Gets Extracted:**
+- Main text content
+- Removes: scripts, styles, navigation, footers
+- Cleans up whitespace
+
+#### Sitemap (Multiple Pages)
+
+**Load multiple pages from a website's sitemap.**
+
+**How to Use:**
+1. Enter a sitemap URL (e.g., `https://example.com/sitemap.xml`)
+2. Set maximum pages to load (1-100, default: 20)
+3. Click "📑 Load from Sitemap"
+4. Wait for processing (may take several minutes)
+
+**How to Find Sitemaps:**
+- Try: `https://example.com/sitemap.xml`
+- Try: `https://example.com/sitemap_index.xml`
+- Check: `https://example.com/robots.txt`
+- Search: `site:example.com sitemap`
+
+**Best Practices:**
+- Start with 10-20 pages to test
+- Increase limit for larger sites
+- Loading may take time (1-2 sec per page)
+- Failed pages are automatically skipped
+- Progress is shown in the terminal
+
+**Example Use Cases:**
+- Load entire documentation sites
+- Scrape knowledge bases
+- Import blog archives
+- Build Q&A from FAQs
+
+**⚠️ Important Notes:**
+- Respect website terms of service
+- Some sites may block automated access
+- Built-in rate limiting (1-2 sec delay between requests)
+- Large sites may take significant time
+
+**See Also:**
+- [Web Scraping Guide](WEB_SCRAPING_GUIDE.md) - Detailed guide with examples
+- `examples/web_scraping_sitemap.py` - Programmatic scraping
+- `examples/web_scraping_recursive.py` - Alternative method
 
 ---
 
