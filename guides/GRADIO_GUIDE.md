@@ -81,10 +81,40 @@ The Gradio interface has 5 main tabs:
 **Load and manage documents in ChromaDB.**
 
 **Features:**
+- **Collection Management** - Organize data into separate collections
 - Load all documents from `data/` directory
 - See loading progress and statistics
 - View skipped files and errors
 - Information about current database
+
+#### Collection Management
+
+**What are Collections?**
+
+Collections are separate "folders" within ChromaDB that let you organize different types of content:
+- Keep web pages separate from PDF documents
+- Organize by project, topic, or data source
+- Query specific collections independently
+
+**How to Use:**
+
+1. Click "🗂️ Collection Management" to expand
+2. Enter a collection name (e.g., `web_content`, `product_docs`)
+3. Click "🔄 Switch Collection"
+4. All subsequent data loads go to this collection
+5. Queries only search the active collection
+
+**Example Collections:**
+- `rag_documents` (default) - Mixed documents
+- `web_content` - Scraped web pages
+- `product_docs` - Product documentation
+- `company_knowledge` - Internal knowledge base
+
+**Tips:**
+- Switching to a new collection creates it automatically
+- Collections persist across sessions
+- View all collections in the stats panel
+- Switch between collections anytime
 
 **How to Load Documents:**
 1. Place files in the `data/` directory

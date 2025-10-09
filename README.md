@@ -101,6 +101,7 @@ The app will automatically find an available port (7860-7869) and display the UR
    - Similarity scoring
 
 3. **📁 Data Management** - Load and manage documents
+   - **Collection Management** - Organize data into separate collections
    - Upload from `data/` directory
    - View loading statistics
    - Track skipped files and errors

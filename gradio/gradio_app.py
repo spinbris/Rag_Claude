@@ -23,19 +23,50 @@ from typing import List
 # Initialize RAG system
 persist_directory = "outputs/chroma_db"
 rag = None
+current_collection = "rag_documents"
+
+
+def get_available_collections():
+    """Get list of available collections in the database."""
+    try:
+        from ragsystem.storage.chroma_storage import ChromaVectorStore
+        import chromadb
+        from chromadb.config import Settings
+
+        client = chromadb.PersistentClient(
+            path=persist_directory,
+            settings=Settings(anonymized_telemetry=False, allow_reset=False)
+        )
+        collections = client.list_collections()
+        return [coll.name for coll in collections]
+    except Exception as e:
+        print(f"Error getting collections: {e}")
+        return []
 
 
 def initialize_rag(collection_name="rag_documents"):
     """Initialize or reinitialize the RAG system."""
-    global rag
+    global rag, current_collection
     try:
         rag = RAGSystem(
             persist_directory=persist_directory,
             collection_name=collection_name
         )
+        current_collection = collection_name
         return f"✓ Connected to collection: {collection_name}"
     except Exception as e:
         return f"❌ Error initializing RAG: {str(e)}"
+
+
+def switch_collection(collection_name: str):
+    """Switch to a different collection."""
+    if not collection_name or not collection_name.strip():
+        return "❌ Please enter a collection name."
+
+    collection_name = collection_name.strip()
+    result = initialize_rag(collection_name)
+    stats = get_stats()
+    return f"{result}\n\n{stats}"
 
 
 def get_stats():
@@ -50,7 +81,7 @@ def get_stats():
         info = f"""
 📊 **Database Statistics**
 
-**Current Collection:** rag_documents
+**Current Collection:** `{current_collection}`
 **Total Documents:** {stats['total_documents']} chunks
 
 **Configuration:**
@@ -456,6 +487,52 @@ with gr.Blocks(title="RAG System - ChromaDB Query Interface", theme=gr.themes.So
         with gr.Tab("📁 Data Management"):
             gr.Markdown("### Load and manage documents")
 
+            # Collection Management Section
+            with gr.Accordion("🗂️ Collection Management", open=False):
+                gr.Markdown("""
+                **Manage ChromaDB Collections**
+
+                Collections let you organize different types of data separately:
+                - **documents** - PDF files and text documents
+                - **web_content** - Scraped web pages
+                - **knowledge_base** - Curated knowledge articles
+                - Or create your own custom collections!
+                """)
+
+                with gr.Row():
+                    with gr.Column():
+                        collection_input = gr.Textbox(
+                            label="Collection Name",
+                            placeholder="Enter collection name (e.g., 'web_content')",
+                            value=current_collection
+                        )
+                        switch_btn = gr.Button("🔄 Switch Collection", variant="secondary")
+                        collection_output = gr.Markdown()
+
+                        switch_btn.click(
+                            fn=switch_collection,
+                            inputs=collection_input,
+                            outputs=collection_output
+                        )
+
+                    with gr.Column():
+                        gr.Markdown("""
+                        **Tips:**
+                        - Switching creates the collection if it doesn't exist
+                        - All subsequent loads go to the active collection
+                        - Query/search only searches the active collection
+                        - Collections persist across sessions
+
+                        **Example Collections:**
+                        - `rag_documents` (default)
+                        - `web_content`
+                        - `product_docs`
+                        - `company_knowledge`
+                        """)
+
+            gr.Markdown("---")
+
+            # Document Loading Section
             with gr.Row():
                 with gr.Column():
                     gr.Markdown("""
@@ -464,6 +541,8 @@ with gr.Blocks(title="RAG System - ChromaDB Query Interface", theme=gr.themes.So
                     Click the button below to load all documents from the `data/` directory.
 
                     Supported formats: PDF, DOCX, CSV, TXT, MD
+
+                    *Documents will be added to the current collection.*
                     """)
 
                     load_btn = gr.Button("📂 Load from data/ folder", variant="primary")
@@ -481,10 +560,11 @@ with gr.Blocks(title="RAG System - ChromaDB Query Interface", theme=gr.themes.So
                     Location: `outputs/chroma_db/`
 
                     **To add documents:**
-                    1. Place files in `data/` directory
-                    2. Click "Load from data/ folder"
-                    3. Wait for processing
-                    4. Start querying!
+                    1. (Optional) Switch to desired collection
+                    2. Place files in `data/` directory
+                    3. Click "Load from data/ folder"
+                    4. Wait for processing
+                    5. Start querying!
                     """)
 
         # Tab 4: Web Scraping
@@ -612,9 +692,13 @@ with gr.Blocks(title="RAG System - ChromaDB Query Interface", theme=gr.themes.So
 
             ### 3️⃣ Data Management Tab
 
+            - **Collection Management:** Organize data into separate collections
+              - Switch between collections (e.g., `documents`, `web_content`)
+              - All collections use the same database
+              - Query only searches the active collection
             - **Load Documents:** Import files from the `data/` directory
             - **Supported Formats:** PDF, DOCX, CSV, TXT, Markdown
-            - **Note:** Documents are automatically stored in ChromaDB
+            - **Note:** Documents are added to the current collection
 
             ### 4️⃣ Web Scraping Tab
 
