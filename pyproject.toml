@@ -1,8 +1,9 @@
 [project]
 name = "RAGSystem"
 version = "0.1.0"
-description = "Add your description here"
+description = "A Retrieval-Augmented Generation system with ChromaDB vector storage"
 readme = "README.md"
+license = {text = "MIT"}
 requires-python = ">=3.12"
 dependencies = [
     "bs4>=0.0.2",

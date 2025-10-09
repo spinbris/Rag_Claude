@@ -1,6 +1,8 @@
 RAGSystem
 ==========
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 This repository provides a Retrieval-Augmented Generation (RAG) system with **ChromaDB** vector storage.
 
 ## Features
@@ -132,3 +134,7 @@ All comprehensive guides are in the [`guides/`](guides/) folder:
 - `RAGSystem.load_file` accepts a directory path and will recurse into subdirectories
 - Unsupported file types are skipped
 - All outputs are saved to `outputs/` folder
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

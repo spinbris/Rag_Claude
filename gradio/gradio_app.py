@@ -6,6 +6,10 @@ Usage:
     uv run python gradio_app.py
 
 Then open http://localhost:7860 in your browser.
+
+License:
+    MIT License - Copyright (c) 2025 Stephen Parton
+    See LICENSE file for details.
 """
 
 import os
@@ -158,18 +162,24 @@ def load_sample_data():
         if not os.path.exists('data/'):
             return "❌ No data/ directory found. Please create it and add some documents."
 
-        summary = rag.load_file('data/', verbose=True)
+        # Use verbose=False to actually load files into ChromaDB
+        # verbose=True only counts chunks without loading them
+        chunks_added = rag.load_file('data/', verbose=False)
+
+        # Count files in data directory
+        file_count = sum(1 for root, _, files in os.walk('data/')
+                        for f in files if not f.startswith('.'))
 
         result = f"""
 ✅ **Loading Complete!**
 
-**Chunks Added:** {summary['added_chunks']}
+**Files Processed:** {file_count}
 
-**Skipped Files:** {len(summary.get('skipped_files', []))}
-{chr(10).join(f'  • {f}' for f in summary.get('skipped_files', [])[:5])}
+**Chunks Added:** {chunks_added}
 
-**Errors:** {len(summary.get('errors', []))}
-{chr(10).join(f'  • {e["file"]}: {e["error"]}' for e in summary.get('errors', [])[:5])}
+**Database Location:** `outputs/chroma_db/`
+
+*Note: Files already in the database may be skipped to avoid duplicates.*
 """
         return result
 
@@ -410,11 +420,25 @@ with gr.Blocks(title="RAG System - ChromaDB Query Interface", theme=gr.themes.So
             - `load_multiple_files.py` - Batch loading
             - `manage_collections.py` - Collection management
             - `add_to_existing_collection.py` - Incremental loading
+
+            ---
+
+            ### 📄 License
+
+            This project is licensed under the **MIT License**.
+
+            **What this means:**
+            - ✅ Free to use, modify, and distribute
+            - ✅ Can be used in commercial projects
+            - ✅ No warranty or liability
+            - 📋 See the LICENSE file for full details
+
+            **Copyright © 2025 Stephen Parton**
             """)
 
     gr.Markdown("""
     ---
-    **RAG System with ChromaDB** | Built with Gradio | Powered by OpenAI
+    **RAG System with ChromaDB** | Built with Gradio | Powered by OpenAI | [MIT License](https://opensource.org/licenses/MIT) © 2025
     """)
 
     # Exit/Shutdown Section

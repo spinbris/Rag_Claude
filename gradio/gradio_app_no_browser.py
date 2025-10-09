@@ -7,6 +7,10 @@ Usage:
     uv run python gradio_app_no_browser.py
 
 Then manually open the displayed URL in your browser.
+
+License:
+    MIT License - Copyright (c) 2025 Stephen Parton
+    See LICENSE file for details.
 """
 
 # Import the main app
