@@ -4,9 +4,10 @@
 import os
 from typing import List, Optional
 import openai
+from .base_embeddings import BaseEmbeddings
 
 
-class OpenAIEmbeddings:
+class OpenAIEmbeddings(BaseEmbeddings):
     """Generate embeddings using OpenAI API.
 
     The client is created lazily so modules can be imported/instantiated in
@@ -57,3 +58,16 @@ class OpenAIEmbeddings:
             batch_embeddings = [item.embedding for item in response.data]
             embeddings.extend(batch_embeddings)
         return embeddings
+
+    @property
+    def dimension(self) -> int:
+        """Return the dimension of the embedding vectors."""
+        # OpenAI text-embedding-3-small: 1536, text-embedding-3-large: 3072
+        if "large" in self.model:
+            return 3072
+        return 1536
+
+    @property
+    def model_name(self) -> str:
+        """Return the name of the embedding model."""
+        return self.model

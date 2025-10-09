@@ -12,6 +12,7 @@ This repository provides a Retrieval-Augmented Generation (RAG) system with **Ch
 - 🔍 **Semantic Search**: Cosine similarity-based retrieval
 - 💾 **Automatic Persistence**: Data is automatically saved and loaded
 - 🚀 **Knowledge Graph Ready**: Built on ChromaDB for future graph integration
+- 🎯 **Custom Embeddings**: Support for OpenAI, Voyage AI, and local Sentence Transformers
 
 ## Quick Start
 
@@ -123,6 +124,7 @@ The app will automatically find an available port (7860-7869) and display the UR
 
 ### Quick Links
 - **[Quick Start Guide](guides/QUICKSTART.md)** - Get up and running in 3 steps
+- **[Custom Embeddings Guide](CUSTOM_EMBEDDINGS.md)** - Use local, Voyage AI, or OpenAI embeddings
 - **[Gradio Interface Guide](guides/GRADIO_GUIDE.md)** - Complete web UI documentation
 - **[Web Scraping Guide](guides/WEB_SCRAPING_GUIDE.md)** - Scrape entire websites (sitemap & recursive)
 - **[Examples](examples/README.md)** - Code examples and tutorials

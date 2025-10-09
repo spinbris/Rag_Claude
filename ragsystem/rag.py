@@ -12,7 +12,7 @@ except ImportError:
 
 import openai
 import os
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Union
 from .chunkers import TextChunker
 from .embeddings import OpenAIEmbeddings
 from .storage import ChromaVectorStore
@@ -28,18 +28,21 @@ class RAGSystem:
                  embedding_model: str = "text-embedding-3-small",
                  llm_model: str = "gpt-4o-mini",
                  persist_directory: str = "./chroma_db",
-                 collection_name: str = "rag_documents"):
+                 collection_name: str = "rag_documents",
+                 embeddings: Optional[object] = None):
         """
         Initialize RAG system.
 
         Args:
-            api_key: OpenAI API key
+            api_key: OpenAI API key (used for LLM and default embeddings)
             chunk_size: Size of text chunks
             chunk_overlap: Overlap between chunks
-            embedding_model: OpenAI embedding model
+            embedding_model: OpenAI embedding model (ignored if embeddings provided)
             llm_model: OpenAI LLM model for generation
             persist_directory: Directory for ChromaDB persistence
             collection_name: Name of ChromaDB collection
+            embeddings: Custom embedding provider (BaseEmbeddings instance).
+                       If None, uses OpenAI embeddings with embedding_model.
         """
         # Import loaders lazily; some loaders depend on optional packages
         # (requests, bs4, pypdf) which may not be available in test envs.
@@ -67,10 +70,22 @@ class RAGSystem:
         self.md_loader = MarkdownLoader() if MarkdownLoader is not None else None
 
         self.chunker = TextChunker(chunk_size, chunk_overlap)
-        self.embeddings = OpenAIEmbeddings(api_key, embedding_model)
+
+        # Use provided embeddings or create default OpenAI embeddings
+        if embeddings is not None:
+            self.embeddings = embeddings
+        else:
+            self.embeddings = OpenAIEmbeddings(api_key, embedding_model)
+
         self.vector_store = ChromaVectorStore(persist_directory, collection_name)
         self.llm_model = llm_model
-        self.client = openai.OpenAI(api_key=self.embeddings.api_key)
+
+        # For OpenAI LLM, use the API key from embeddings if it's OpenAI, else use provided key
+        llm_api_key = api_key
+        if isinstance(self.embeddings, OpenAIEmbeddings) and self.embeddings.api_key:
+            llm_api_key = self.embeddings.api_key
+
+        self.client = openai.OpenAI(api_key=llm_api_key)
 
     def load_website(self, url: str) -> int:
         if not self.web_loader:
@@ -297,6 +312,7 @@ class RAGSystem:
             'total_documents': len(self.vector_store),
             'chunk_size': self.chunker.chunk_size,
             'chunk_overlap': self.chunker.chunk_overlap,
-            'embedding_model': self.embeddings.model,
+            'embedding_model': self.embeddings.model_name,
+            'embedding_dimension': self.embeddings.dimension,
             'llm_model': self.llm_model
         }
