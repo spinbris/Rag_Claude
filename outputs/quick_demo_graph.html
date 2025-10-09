@@ -1,0 +1,143 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Knowledge Graph Visualization</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        #graph {
+            width: 100%;
+            height: 800px;
+            border: 1px solid #ccc;
+            background: white;
+        }
+        .node {
+            cursor: pointer;
+        }
+        .node circle {
+            fill: #4CAF50;
+            stroke: #2E7D32;
+            stroke-width: 2px;
+        }
+        .node text {
+            font-size: 12px;
+            pointer-events: none;
+        }
+        .link {
+            stroke: #999;
+            stroke-opacity: 0.6;
+            stroke-width: 1.5px;
+        }
+        .link-label {
+            font-size: 10px;
+            fill: #666;
+        }
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+        .stats {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <h1>Knowledge Graph Visualization</h1>
+    <div class="stats">
+        <strong>Entities:</strong> 13 |
+        <strong>Relationships:</strong> 9
+    </div>
+    <svg id="graph"></svg>
+
+    <script>
+        const graphData = {
+            nodes: [{"id": "Python", "label": "Python"}, {"id": "Guido van Rossum", "label": "Guido van Rossum"}, {"id": "machine learning", "label": "machine learning"}, {"id": "data science", "label": "data science"}, {"id": "Machine learning", "label": "Machine learning"}, {"id": "artificial intelligence", "label": "artificial intelligence"}, {"id": "statistical techniques", "label": "statistical techniques"}, {"id": "Deep learning", "label": "Deep learning"}, {"id": "neural networks", "label": "neural networks"}, {"id": "RAG systems", "label": "RAG systems"}, {"id": "ChromaDB", "label": "ChromaDB"}, {"id": "knowledge graphs", "label": "knowledge graphs"}, {"id": "Embeddings", "label": "Embeddings"}],
+            links: [{"source": "Python", "target": "data science", "label": "used for"}, {"source": "Python", "target": "machine learning", "label": "used for"}, {"source": "Python", "target": "Guido van Rossum", "label": "created by"}, {"source": "Deep learning", "target": "neural networks", "label": "uses"}, {"source": "Machine learning", "target": "artificial intelligence", "label": "is a subset of"}, {"source": "Deep learning", "target": "machine learning", "label": "is a type of"}, {"source": "Python", "target": "machine learning", "label": "is the most popular language for"}, {"source": "RAG systems", "target": "knowledge graphs", "label": "incorporate"}, {"source": "Machine learning", "target": "statistical techniques", "label": "uses"}]
+        };
+
+        const width = document.getElementById('graph').clientWidth;
+        const height = 800;
+
+        const svg = d3.select("#graph")
+            .attr("width", width)
+            .attr("height", height);
+
+        const simulation = d3.forceSimulation(graphData.nodes)
+            .force("link", d3.forceLink(graphData.links).id(d => d.id).distance(100))
+            .force("charge", d3.forceManyBody().strength(-300))
+            .force("center", d3.forceCenter(width / 2, height / 2));
+
+        const link = svg.append("g")
+            .selectAll("line")
+            .data(graphData.links)
+            .enter().append("line")
+            .attr("class", "link");
+
+        const linkLabel = svg.append("g")
+            .selectAll("text")
+            .data(graphData.links)
+            .enter().append("text")
+            .attr("class", "link-label")
+            .text(d => d.label);
+
+        const node = svg.append("g")
+            .selectAll("g")
+            .data(graphData.nodes)
+            .enter().append("g")
+            .attr("class", "node")
+            .call(d3.drag()
+                .on("start", dragstarted)
+                .on("drag", dragged)
+                .on("end", dragended));
+
+        node.append("circle")
+            .attr("r", 8);
+
+        node.append("text")
+            .attr("dx", 12)
+            .attr("dy", 4)
+            .text(d => d.label);
+
+        simulation.on("tick", () => {
+            link
+                .attr("x1", d => d.source.x)
+                .attr("y1", d => d.source.y)
+                .attr("x2", d => d.target.x)
+                .attr("y2", d => d.target.y);
+
+            linkLabel
+                .attr("x", d => (d.source.x + d.target.x) / 2)
+                .attr("y", d => (d.source.y + d.target.y) / 2);
+
+            node.attr("transform", d => `translate(${d.x},${d.y})`);
+        });
+
+        function dragstarted(event, d) {
+            if (!event.active) simulation.alphaTarget(0.3).restart();
+            d.fx = d.x;
+            d.fy = d.y;
+        }
+
+        function dragged(event, d) {
+            d.fx = event.x;
+            d.fy = event.y;
+        }
+
+        function dragended(event, d) {
+            if (!event.active) simulation.alphaTarget(0);
+            d.fx = null;
+            d.fy = null;
+        }
+    </script>
+</body>
+</html>
+        

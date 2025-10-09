@@ -3,7 +3,7 @@ RAGSystem
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-This repository provides a Retrieval-Augmented Generation (RAG) system with **ChromaDB** vector storage.
+This repository provides a Retrieval-Augmented Generation (RAG) system with **ChromaDB** vector storage and **Knowledge Graph** capabilities.
 
 ## Features
 
@@ -11,7 +11,7 @@ This repository provides a Retrieval-Augmented Generation (RAG) system with **Ch
 - 📄 **Multi-format Support**: PDF, DOCX, CSV, TXT, Markdown, and web pages
 - 🔍 **Semantic Search**: Cosine similarity-based retrieval
 - 💾 **Automatic Persistence**: Data is automatically saved and loaded
-- 🚀 **Knowledge Graph Ready**: Built on ChromaDB for future graph integration
+- 🕸️ **Knowledge Graph**: Entity extraction, relationships, and graph-aware retrieval
 - 🎯 **Custom Embeddings**: Support for OpenAI, Voyage AI, and local Sentence Transformers
 
 ## Quick Start
@@ -63,9 +63,25 @@ answer = rag.query("What are the key points?")
 
 Launch the interactive web interface to query your documents:
 
+### Standard Interface
 ```bash
 ./start_gradio.sh
 ```
+
+### Knowledge Graph Interface (NEW! 🕸️)
+```bash
+./start_gradio_kg.sh
+```
+
+**Features:**
+- 🕸️ Visual knowledge graph exploration
+- 🏷️ Entity search and browsing
+- 🔄 Graph traversal (explore connections)
+- 📊 Multiple visualizations (ASCII, Mermaid, D3.js)
+- ⚡ Toggle between Regular and Graph RAG modes
+- 🎯 Graph-aware queries with relationship context
+
+**See:** [GRADIO_KNOWLEDGE_GRAPH.md](GRADIO_KNOWLEDGE_GRAPH.md) for complete guide!
 
 The app will automatically find an available port (7860-7869) and display the URL.
 
@@ -125,6 +141,8 @@ The app will automatically find an available port (7860-7869) and display the UR
 ### Quick Links
 - **[Quick Start Guide](guides/QUICKSTART.md)** - Get up and running in 3 steps
 - **[Custom Embeddings Guide](CUSTOM_EMBEDDINGS.md)** - Use local, Voyage AI, or OpenAI embeddings
+- **[Knowledge Graph Guide](KNOWLEDGE_GRAPH_GUIDE.md)** - Build knowledge graphs with any embedding provider
+- **[Knowledge Graph Gradio Interface](GRADIO_KNOWLEDGE_GRAPH.md)** - Visual knowledge graph exploration (NEW! 🕸️)
 - **[Gradio Interface Guide](guides/GRADIO_GUIDE.md)** - Complete web UI documentation
 - **[Web Scraping Guide](guides/WEB_SCRAPING_GUIDE.md)** - Scrape entire websites (sitemap & recursive)
 - **[Examples](examples/README.md)** - Code examples and tutorials

@@ -11,7 +11,7 @@ try:
 except Exception:
 	pass
 
-__all__ = ["RAGSystem"]
+__all__ = ["RAGSystem", "GraphRAGSystem"]
 
 def __getattr__(name: str):
 	if name == "RAGSystem":
@@ -19,6 +19,11 @@ def __getattr__(name: str):
 
 		mod = importlib.import_module("ragsystem.rag")
 		return getattr(mod, "RAGSystem")
+	elif name == "GraphRAGSystem":
+		import importlib
+
+		mod = importlib.import_module("ragsystem.graph_rag")
+		return getattr(mod, "GraphRAGSystem")
 	raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 
