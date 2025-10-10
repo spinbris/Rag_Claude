@@ -1,9 +1,9 @@
-"""Gradio Web Interface for RAG System with ChromaDB.
+"""Gradio Web Interface for RAG System with Knowledge Graph Support.
 
-A simple, interactive web interface for querying documents stored in ChromaDB.
+Enhanced version with knowledge graph exploration, entity search, and graph-aware queries.
 
 Usage:
-    uv run python gradio_app.py
+    uv run python gradio/gradio_app.py
 
 Then open http://localhost:7860 in your browser.
 
@@ -15,15 +15,21 @@ License:
 import os
 import gradio as gr
 from ragsystem import RAGSystem
+from ragsystem import GraphRAGSystem
+from ragsystem.knowledge_graph import GraphVisualizer
 from datetime import datetime
 import requests
 import xml.etree.ElementTree as ET
 from typing import List
+import json
 
 # Initialize RAG system
 persist_directory = "outputs/chroma_db"
+graph_persist_directory = "outputs/chroma_graph_db"
 rag = None
+graph_rag = None
 current_collection = "rag_documents"
+use_graph_mode = False  # Toggle between regular RAG and Graph RAG
 
 
 def get_available_collections():
@@ -44,18 +50,37 @@ def get_available_collections():
         return []
 
 
-def initialize_rag(collection_name="rag_documents"):
+def initialize_rag(collection_name="rag_documents", enable_graph=False):
     """Initialize or reinitialize the RAG system."""
-    global rag, current_collection
+    global rag, graph_rag, current_collection, use_graph_mode
+
     try:
-        rag = RAGSystem(
-            persist_directory=persist_directory,
-            collection_name=collection_name
-        )
-        current_collection = collection_name
-        return f"✓ Connected to collection: {collection_name}"
+        use_graph_mode = enable_graph
+
+        if enable_graph:
+            graph_rag = GraphRAGSystem(
+                persist_directory=graph_persist_directory,
+                collection_name=collection_name,
+                enable_graph_extraction=True
+            )
+            current_collection = collection_name
+            return f"✓ Connected to Graph RAG collection: {collection_name}"
+        else:
+            rag = RAGSystem(
+                persist_directory=persist_directory,
+                collection_name=collection_name
+            )
+            current_collection = collection_name
+            return f"✓ Connected to collection: {collection_name}"
     except Exception as e:
         return f"❌ Error initializing RAG: {str(e)}"
+
+
+def switch_mode(enable_graph):
+    """Switch between regular RAG and Graph RAG."""
+    result = initialize_rag(current_collection, enable_graph)
+    stats = get_stats()
+    return f"{result}\n\n{stats}"
 
 
 def switch_collection(collection_name: str):
@@ -64,23 +89,25 @@ def switch_collection(collection_name: str):
         return "❌ Please enter a collection name."
 
     collection_name = collection_name.strip()
-    result = initialize_rag(collection_name)
+    result = initialize_rag(collection_name, use_graph_mode)
     stats = get_stats()
     return f"{result}\n\n{stats}"
 
 
 def get_stats():
     """Get current database statistics."""
-    if rag is None:
+    active_system = graph_rag if use_graph_mode else rag
+
+    if active_system is None:
         return "❌ RAG system not initialized"
 
     try:
-        stats = rag.get_stats()
-        collections = rag.vector_store.get_collections()
+        stats = active_system.get_stats()
 
         info = f"""
 📊 **Database Statistics**
 
+**Mode:** {'🕸️ Graph RAG' if use_graph_mode else '📚 Regular RAG'}
 **Current Collection:** `{current_collection}`
 **Total Documents:** {stats['total_documents']} chunks
 
@@ -88,21 +115,34 @@ def get_stats():
 - Chunk Size: {stats['chunk_size']}
 - Chunk Overlap: {stats['chunk_overlap']}
 - Embedding Model: {stats['embedding_model']}
+- Embedding Dimensions: {stats.get('embedding_dimension', 'N/A')}
 - LLM Model: {stats['llm_model']}
-
-**Available Collections:** {len(collections)}
-{chr(10).join(f'  • {col}' for col in collections)}
-
-**Storage Location:** {persist_directory}
 """
+
+        if use_graph_mode and graph_rag:
+            info += f"""
+**Knowledge Graph:**
+- Total Entities: {stats.get('total_entities', 0)}
+- Total Relations: {stats.get('total_relations', 0)}
+- Graph Extraction: {'✓ Enabled' if stats.get('graph_enabled') else '✗ Disabled'}
+"""
+            if stats.get('top_entities'):
+                info += "\n**Top Entities:**\n"
+                for entity, count in stats['top_entities'][:5]:
+                    info += f"  • {entity}: {count}\n"
+
+        info += f"\n**Storage Location:** {graph_persist_directory if use_graph_mode else persist_directory}"
+
         return info
     except Exception as e:
         return f"❌ Error getting stats: {str(e)}"
 
 
-def query_documents(question, top_k=5, max_tokens=500, save_output=False):
-    """Query the RAG system."""
-    if rag is None:
+def query_documents(question, top_k=5, max_tokens=500, use_graph_context=False, save_output=False):
+    """Query the RAG system with optional graph context."""
+    active_system = graph_rag if use_graph_mode else rag
+
+    if active_system is None:
         return "❌ RAG system not initialized. Please click 'Initialize System' first.", ""
 
     if not question or not question.strip():
@@ -110,22 +150,37 @@ def query_documents(question, top_k=5, max_tokens=500, save_output=False):
 
     try:
         # Get statistics
-        stats = rag.get_stats()
+        stats = active_system.get_stats()
 
         if stats['total_documents'] == 0:
-            return "❌ No documents in database. Please load documents first using the examples.", ""
+            return "❌ No documents in database. Please load documents first.", ""
 
         # Query the system
-        answer = rag.query(question, top_k=int(top_k), max_tokens=int(max_tokens))
+        if use_graph_mode and use_graph_context:
+            answer = graph_rag.query(
+                question,
+                top_k=int(top_k),
+                max_tokens=int(max_tokens),
+                use_graph_context=True
+            )
+        else:
+            answer = active_system.query(question, top_k=int(top_k), max_tokens=int(max_tokens))
 
         # Get source documents
-        search_results = rag.search(question, top_k=int(top_k))
+        search_results = active_system.search(question, top_k=int(top_k))
 
         # Format sources
         sources_text = "\n\n**📚 Sources Used:**\n\n"
         for i, result in enumerate(search_results, 1):
             sources_text += f"**{i}. {result['source']}** (Score: {result['score']:.3f})\n"
-            sources_text += f"   _{result['content'][:200]}..._\n\n"
+            sources_text += f"   _{result['content'][:200]}..._\n"
+
+            # Add graph info if available
+            if use_graph_mode and 'graph' in result:
+                entities = result['graph'].get('entities', [])
+                if entities:
+                    sources_text += f"   *Entities: {', '.join(entities[:3])}*\n"
+            sources_text += "\n"
 
         # Save to file if requested
         output_file = ""
@@ -136,11 +191,12 @@ def query_documents(question, top_k=5, max_tokens=500, save_output=False):
 
             with open(output_file, 'w') as f:
                 f.write("="*80 + "\n")
-                f.write("RAG QUERY RESULT\n")
+                f.write(f"{'GRAPH ' if use_graph_mode else ''}RAG QUERY RESULT\n")
                 f.write("="*80 + "\n\n")
                 f.write(f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
                 f.write(f"Question: {question}\n")
                 f.write(f"Top-K: {top_k}\n")
+                f.write(f"Graph Context: {use_graph_context}\n")
                 f.write(f"Max Tokens: {max_tokens}\n\n")
                 f.write("ANSWER:\n")
                 f.write(answer + "\n\n")
@@ -160,14 +216,16 @@ def query_documents(question, top_k=5, max_tokens=500, save_output=False):
 
 def search_only(query, top_k=10):
     """Search documents without LLM generation."""
-    if rag is None:
+    active_system = graph_rag if use_graph_mode else rag
+
+    if active_system is None:
         return "❌ RAG system not initialized."
 
     if not query or not query.strip():
         return "⚠️ Please enter a search query."
 
     try:
-        results = rag.search(query, top_k=int(top_k))
+        results = active_system.search(query, top_k=int(top_k))
 
         if not results:
             return "No results found."
@@ -178,6 +236,16 @@ def search_only(query, top_k=10):
         for i, result in enumerate(results, 1):
             output += f"### {i}. {result['source']}\n"
             output += f"**Similarity Score:** {result['score']:.3f}\n"
+
+            # Add graph info if available
+            if use_graph_mode and 'graph' in result:
+                entities = result['graph'].get('entities', [])
+                relations = result['graph'].get('relations', [])
+                if entities:
+                    output += f"**Entities:** {', '.join(entities)}\n"
+                if relations:
+                    output += f"**Relations:** {len(relations)} found\n"
+
             output += f"**Content:**\n{result['content']}\n\n"
             output += "---\n\n"
 
@@ -189,16 +257,16 @@ def search_only(query, top_k=10):
 
 def load_sample_data():
     """Load sample data from data/ directory."""
-    if rag is None:
+    active_system = graph_rag if use_graph_mode else rag
+
+    if active_system is None:
         return "❌ RAG system not initialized."
 
     try:
         if not os.path.exists('data/'):
             return "❌ No data/ directory found. Please create it and add some documents."
 
-        # Use verbose=False to actually load files into ChromaDB
-        # verbose=True only counts chunks without loading them
-        chunks_added = rag.load_file('data/', verbose=False)
+        chunks_added = active_system.load_file('data/', verbose=False)
 
         # Count files in data directory
         file_count = sum(1 for root, _, files in os.walk('data/')
@@ -208,10 +276,9 @@ def load_sample_data():
 ✅ **Loading Complete!**
 
 **Files Processed:** {file_count}
-
 **Chunks Added:** {chunks_added}
-
-**Database Location:** `outputs/chroma_db/`
+**Mode:** {'🕸️ Graph RAG (with entity extraction)' if use_graph_mode else '📚 Regular RAG'}
+**Database Location:** `{graph_persist_directory if use_graph_mode else persist_directory}`
 
 *Note: Files already in the database may be skipped to avoid duplicates.*
 """
@@ -223,7 +290,9 @@ def load_sample_data():
 
 def load_single_url(url: str) -> str:
     """Load a single web page."""
-    if rag is None:
+    active_system = graph_rag if use_graph_mode else rag
+
+    if active_system is None:
         return "❌ RAG system not initialized."
 
     if not url or not url.strip():
@@ -241,7 +310,7 @@ def load_single_url(url: str) -> str:
         docs = loader.load(url)
 
         # Process and add to RAG
-        chunks_added = rag._process_documents(docs)
+        chunks_added = active_system._process_documents(docs)
 
         return f"""
 ✅ **Page Loaded Successfully!**
@@ -250,7 +319,9 @@ def load_single_url(url: str) -> str:
 
 **Chunks Added:** {chunks_added}
 
-**Database:** `outputs/chroma_db/`
+**Mode:** {'🕸️ Graph RAG (with entity extraction)' if use_graph_mode else '📚 Regular RAG'}
+
+**Database:** `{graph_persist_directory if use_graph_mode else persist_directory}`
 """
     except Exception as e:
         return f"❌ Error loading URL: {str(e)}"
@@ -287,7 +358,9 @@ def get_sitemap_urls(sitemap_url: str, max_urls: int = 50) -> List[str]:
 
 def load_from_sitemap(sitemap_url: str, max_pages: int = 20) -> str:
     """Load multiple pages from a sitemap."""
-    if rag is None:
+    active_system = graph_rag if use_graph_mode else rag
+
+    if active_system is None:
         return "❌ RAG system not initialized."
 
     if not sitemap_url or not sitemap_url.strip():
@@ -315,7 +388,7 @@ def load_from_sitemap(sitemap_url: str, max_pages: int = 20) -> str:
             try:
                 print(f"Loading {i}/{len(urls)}: {url}")
                 docs = loader.load(url)
-                chunks = rag._process_documents(docs)
+                chunks = active_system._process_documents(docs)
                 total_chunks += chunks
                 successful += 1
             except Exception as e:
@@ -336,12 +409,164 @@ def load_from_sitemap(sitemap_url: str, max_pages: int = 20) -> str:
 
 **Total Chunks Added:** {total_chunks}
 
-**Database:** `outputs/chroma_db/`
+**Mode:** {'🕸️ Graph RAG (with entity extraction)' if use_graph_mode else '📚 Regular RAG'}
+
+**Database:** `{graph_persist_directory if use_graph_mode else persist_directory}`
 """
         return result
 
     except Exception as e:
         return f"❌ Error loading sitemap: {str(e)}"
+
+
+# Knowledge Graph specific functions
+
+def get_all_entities():
+    """Get all entities in the knowledge graph."""
+    if not use_graph_mode or graph_rag is None:
+        return "❌ Graph mode not enabled. Please enable Graph RAG mode first."
+
+    try:
+        entities = graph_rag.get_entities()
+
+        if not entities:
+            return "No entities found. Please load documents first."
+
+        output = f"**🏷️ All Entities ({len(entities)} total):**\n\n"
+
+        # Sort by frequency
+        sorted_entities = sorted(entities.items(), key=lambda x: x[1], reverse=True)
+
+        for entity, count in sorted_entities[:50]:  # Show top 50
+            bar = "█" * min(count, 30)
+            output += f"`{entity}` {bar} ({count})\n"
+
+        if len(entities) > 50:
+            output += f"\n*... and {len(entities) - 50} more entities*"
+
+        return output
+
+    except Exception as e:
+        return f"❌ Error getting entities: {str(e)}"
+
+
+def search_by_entity(entity_name, top_k=10):
+    """Find all chunks mentioning a specific entity."""
+    if not use_graph_mode or graph_rag is None:
+        return "❌ Graph mode not enabled."
+
+    if not entity_name or not entity_name.strip():
+        return "⚠️ Please enter an entity name."
+
+    try:
+        results = graph_rag.search_by_entity(entity_name, top_k=int(top_k))
+
+        if not results:
+            return f"No chunks found mentioning entity: {entity_name}"
+
+        output = f"**🎯 Chunks mentioning:** `{entity_name}`\n\n"
+        output += f"**Found {len(results)} chunks:**\n\n"
+
+        for i, result in enumerate(results, 1):
+            output += f"### {i}. {result['source']}\n"
+            output += f"**Content:**\n{result['content'][:300]}...\n\n"
+
+            if 'graph' in result:
+                entities = result['graph'].get('entities', [])
+                relations = result['graph'].get('relations', [])
+                if entities:
+                    output += f"**Other Entities:** {', '.join([e for e in entities if e != entity_name][:5])}\n"
+                if relations:
+                    # Find relations involving this entity
+                    relevant_rels = [r for r in relations if entity_name.lower() in r.lower()]
+                    if relevant_rels:
+                        output += f"**Relations:** {', '.join(relevant_rels[:3])}\n"
+
+            output += "\n---\n\n"
+
+        return output
+
+    except Exception as e:
+        return f"❌ Error searching by entity: {str(e)}"
+
+
+def traverse_graph(start_entity, max_hops=2):
+    """Traverse the knowledge graph from a starting entity."""
+    if not use_graph_mode or graph_rag is None:
+        return "❌ Graph mode not enabled."
+
+    if not start_entity or not start_entity.strip():
+        return "⚠️ Please enter a starting entity."
+
+    try:
+        subgraph = graph_rag.traverse_from_entity(start_entity, max_hops=int(max_hops))
+
+        if not subgraph['entities']:
+            return f"No connections found for entity: {start_entity}"
+
+        output = f"**🕸️ Graph Traversal from:** `{start_entity}`\n\n"
+        output += f"**Max Hops:** {max_hops}\n"
+        output += f"**Connected Entities:** {len(subgraph['entities'])}\n\n"
+
+        output += "**Entities Found:**\n"
+        for entity in subgraph['entities'][:20]:
+            output += f"  • {entity}\n"
+
+        if len(subgraph['entities']) > 20:
+            output += f"  ... and {len(subgraph['entities']) - 20} more\n"
+
+        if subgraph['relations']:
+            output += f"\n**Relationships ({len(subgraph['relations'])} total):**\n\n"
+            for s, r, t in subgraph['relations'][:15]:
+                output += f"  • `{s}` --[{r}]--> `{t}`\n"
+
+            if len(subgraph['relations']) > 15:
+                output += f"\n  *... and {len(subgraph['relations']) - 15} more relationships*\n"
+
+        return output
+
+    except Exception as e:
+        return f"❌ Error traversing graph: {str(e)}"
+
+
+def visualize_graph():
+    """Generate graph visualization."""
+    if not use_graph_mode or graph_rag is None:
+        return "❌ Graph mode not enabled.", ""
+
+    try:
+        entities = graph_rag.get_entities()
+        relations = graph_rag.get_relations()
+
+        if not entities:
+            return "No graph data available. Please load documents first.", ""
+
+        # ASCII visualization
+        ascii_viz = GraphVisualizer.to_ascii_art(entities, relations, max_entities=15)
+
+        # Mermaid diagram
+        entity_list = list(entities.keys())[:20]
+        filtered_relations = [
+            (s, r, t) for s, r, t in relations
+            if s in entity_list and t in entity_list
+        ]
+
+        mermaid = GraphVisualizer.to_mermaid(entity_list, filtered_relations)
+
+        # Save HTML visualization
+        os.makedirs('outputs', exist_ok=True)
+        GraphVisualizer.save_html_visualization(
+            entity_list,
+            filtered_relations,
+            "outputs/graph_visualization.html"
+        )
+
+        html_message = "\n\n**📊 Interactive Visualization:**\nSaved to `outputs/graph_visualization.html` - Open in browser!"
+
+        return ascii_viz + html_message, mermaid
+
+    except Exception as e:
+        return f"❌ Error visualizing graph: {str(e)}", ""
 
 
 def shutdown_server():
@@ -381,13 +606,32 @@ def shutdown_server():
 startup_message = initialize_rag()
 
 # Create Gradio interface
-with gr.Blocks(title="RAG System - ChromaDB Query Interface", theme=gr.themes.Soft()) as app:
+with gr.Blocks(title="RAG System - Knowledge Graph Interface", theme=gr.themes.Soft()) as app:
 
     gr.Markdown("""
-    # 🤖 RAG System - ChromaDB Query Interface
+    # 🤖 RAG System - Knowledge Graph Interface
 
-    Query your documents stored in ChromaDB using natural language.
+    Query your documents with semantic search and explore knowledge graphs.
     """)
+
+    # Mode selector at top
+    with gr.Row():
+        with gr.Column(scale=3):
+            gr.Markdown("**System Mode:**")
+        with gr.Column(scale=1):
+            mode_toggle = gr.Checkbox(
+                label="Enable Knowledge Graph Mode",
+                value=False,
+                info="Extract entities and relationships"
+            )
+
+    mode_status = gr.Markdown()
+
+    mode_toggle.change(
+        fn=switch_mode,
+        inputs=mode_toggle,
+        outputs=mode_status
+    )
 
     with gr.Tabs():
         # Tab 1: Query Interface
@@ -418,6 +662,12 @@ with gr.Blocks(title="RAG System - ChromaDB Query Interface", theme=gr.themes.So
                             label="Max response length (tokens)"
                         )
 
+                    use_graph_checkbox = gr.Checkbox(
+                        label="Use graph context (Graph RAG mode only)",
+                        value=True,
+                        info="Include entity relationships in context"
+                    )
+
                     save_checkbox = gr.Checkbox(
                         label="Save result to file",
                         value=False
@@ -434,7 +684,7 @@ with gr.Blocks(title="RAG System - ChromaDB Query Interface", theme=gr.themes.So
 
             query_btn.click(
                 fn=query_documents,
-                inputs=[question_input, top_k_slider, max_tokens_slider, save_checkbox],
+                inputs=[question_input, top_k_slider, max_tokens_slider, use_graph_checkbox, save_checkbox],
                 outputs=[answer_output, sources_output]
             )
 
@@ -448,17 +698,16 @@ with gr.Blocks(title="RAG System - ChromaDB Query Interface", theme=gr.themes.So
             gr.Examples(
                 examples=[
                     ["What is the main topic of these documents?"],
-                    ["What are the key recommendations?"],
-                    ["Summarize the governance requirements."],
-                    ["What are the climate-related risks mentioned?"],
-                    ["Who published these documents?"],
+                    ["How are the main concepts related?"],
+                    ["What entities are mentioned?"],
+                    ["Summarize the key relationships."],
                 ],
                 inputs=question_input
             )
 
         # Tab 2: Semantic Search
         with gr.Tab("🔍 Semantic Search"):
-            gr.Markdown("### Search for relevant document chunks (no LLM generation)")
+            gr.Markdown("### Search for relevant document chunks")
 
             search_input = gr.Textbox(
                 label="Search Query",
@@ -669,7 +918,111 @@ with gr.Blocks(title="RAG System - ChromaDB Query Interface", theme=gr.themes.So
             - Large sites may take time to process
             """)
 
-        # Tab 5: Help
+        # Tab 5: Knowledge Graph Explorer
+        with gr.Tab("🕸️ Knowledge Graph"):
+            gr.Markdown("""
+            ### Explore the Knowledge Graph
+
+            **Note:** This tab requires **Knowledge Graph Mode** to be enabled.
+            """)
+
+            with gr.Tabs():
+                # Entity Explorer
+                with gr.Tab("🏷️ Entities"):
+                    gr.Markdown("**View all extracted entities**")
+
+                    entities_btn = gr.Button("📋 List All Entities", variant="primary")
+                    entities_output = gr.Markdown()
+
+                    entities_btn.click(
+                        fn=get_all_entities,
+                        outputs=entities_output
+                    )
+
+                    gr.Markdown("---")
+                    gr.Markdown("**Search by Entity**")
+
+                    entity_search_input = gr.Textbox(
+                        label="Entity Name",
+                        placeholder="Enter entity name (e.g., 'Python', 'Machine Learning')"
+                    )
+
+                    entity_top_k = gr.Slider(
+                        minimum=1,
+                        maximum=20,
+                        value=10,
+                        step=1,
+                        label="Max results"
+                    )
+
+                    entity_search_btn = gr.Button("🎯 Find Chunks with Entity")
+                    entity_search_output = gr.Markdown()
+
+                    entity_search_btn.click(
+                        fn=search_by_entity,
+                        inputs=[entity_search_input, entity_top_k],
+                        outputs=entity_search_output
+                    )
+
+                # Graph Traversal
+                with gr.Tab("🕸️ Traversal"):
+                    gr.Markdown("**Explore connections between entities**")
+
+                    traverse_entity_input = gr.Textbox(
+                        label="Starting Entity",
+                        placeholder="Enter entity name"
+                    )
+
+                    traverse_hops = gr.Slider(
+                        minimum=1,
+                        maximum=5,
+                        value=2,
+                        step=1,
+                        label="Maximum hops",
+                        info="How many relationship levels to explore"
+                    )
+
+                    traverse_btn = gr.Button("🚀 Traverse Graph", variant="primary")
+                    traverse_output = gr.Markdown()
+
+                    traverse_btn.click(
+                        fn=traverse_graph,
+                        inputs=[traverse_entity_input, traverse_hops],
+                        outputs=traverse_output
+                    )
+
+                # Visualization
+                with gr.Tab("📊 Visualization"):
+                    gr.Markdown("**Generate graph visualizations**")
+
+                    viz_btn = gr.Button("🎨 Generate Visualizations", variant="primary")
+
+                    with gr.Row():
+                        with gr.Column():
+                            gr.Markdown("**ASCII Art:**")
+                            ascii_output = gr.Markdown()
+
+                        with gr.Column():
+                            gr.Markdown("**Mermaid Diagram:**")
+                            gr.Markdown("*Copy the code below to [mermaid.live](https://mermaid.live)*")
+                            mermaid_output = gr.Textbox(
+                                label="Mermaid Code",
+                                lines=15,
+                                max_lines=20,
+                                interactive=False
+                            )
+
+                    viz_btn.click(
+                        fn=visualize_graph,
+                        outputs=[ascii_output, mermaid_output]
+                    )
+
+                    gr.Markdown("""
+                    ---
+                    **💡 Tip:** An interactive HTML visualization is also saved to `outputs/graph_visualization.html`
+                    """)
+
+        # Tab 6: Help
         with gr.Tab("❓ Help"):
             gr.Markdown("""
             ## How to Use This Interface
@@ -757,7 +1110,7 @@ with gr.Blocks(title="RAG System - ChromaDB Query Interface", theme=gr.themes.So
 
     gr.Markdown("""
     ---
-    **RAG System with ChromaDB** | Built with Gradio | Powered by OpenAI | [MIT License](https://opensource.org/licenses/MIT) © 2025
+    **RAG System with Knowledge Graphs** | Built with Gradio | Powered by OpenAI | [MIT License](https://opensource.org/licenses/MIT) © 2025
     """)
 
     # Exit/Shutdown Section
